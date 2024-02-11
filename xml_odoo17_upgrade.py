@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 
 
 # Provide the directory path where your XML files are located
-directory_path = "/opt/odoo17/projects/accounting_package/advance_payment"
+directory_path = "addon_path"
 
 
 def read_xml_files(directory):
