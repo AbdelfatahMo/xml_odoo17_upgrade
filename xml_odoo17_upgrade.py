@@ -4,7 +4,8 @@ import xml.etree.ElementTree as ET
 
 
 # Provide the directory path where your XML files are located
-directory_path = "addons_root_path"
+directory_path = "/home/dev/Desktop/try"
+
 
 def iterate_xml_comments_substrings(input_string):
     # Define the regular expression pattern to match substrings
@@ -13,18 +14,32 @@ def iterate_xml_comments_substrings(input_string):
     for match in re.finditer(pattern, input_string):
         yield match.group()
 
+def iterate_xml_comment_list_substrings(input_string):
+    # Define the regular expression pattern to match substrings
+    pattern = r'<!--.*?-->'
+    # Find all substrings matching the pattern
+    for match in re.finditer(pattern, input_string):
+        yield match.group()
+
+
 def read_xml_files(directory):
     for directory_path, directory_names, filenames in os.walk(directory):
         for filename in filenames:
             if filename.endswith('.xml'):
                 file_path = os.path.join(directory_path, filename)
                 try:
+                    comments=[]
                     with open(file_path, 'r+') as file:
                         content = file.read()
-                        content = content.replace('<!--', "<comment com='").replace('-->',"' />")
+                        comments = list(iterate_xml_comment_list_substrings(content))
+                        counter = 0
+                        for comment in comments:
+                            counter += 1
+                            content = content.replace(comment,f'<comment{counter} />') 
                         file.seek(0)
                         file.write(content)
                         file.truncate()
+                    print("---------------------")
                     tree = ET.parse(file_path)
                     root_element = tree.getroot()
                     # Convert old operators
@@ -40,8 +55,8 @@ def read_xml_files(directory):
                         '<': '<',
                         '>': '>',
                         '<>': '!=',
-                        '>=' : '>=',
-                        '<=' : '<='
+                        '>=': '>=',
+                        '<=': '<='
                     }
                     # Loop on every element on xml file
                     for elem in root_element.iter():
@@ -51,7 +66,7 @@ def read_xml_files(directory):
                             # Convert attrs to Dictionary
                             attrs = eval(elem.attrib.get("attrs"))
                             for key in attrs.keys():
-                                # print(key ,attrs.get(key))
+                                print(key ,attrs.get(key))
                                 # Get domain of invisible,readonly,, in attrs
                                 domain = attrs.get(key)
                                 if type(attrs.get(key)) == bool:
@@ -61,8 +76,7 @@ def read_xml_files(directory):
                                     field = domain[0][0]
                                     oper = domain[0][1]
                                     value = domain[0][2]
-                                    value = f"'{value}'" if value not in [
-                                        True, False] else value
+                                    value = f"'{value}'" if type(value) == str else value
                                     elem.attrib[key] = f"{field} {operator[oper]} {value}"
                                 # If have more than one domain and don't have or operator
                                 elif len(domain) > 1 and '|' not in domain:
@@ -73,8 +87,7 @@ def read_xml_files(directory):
                                         field = tuple[0]
                                         oper = tuple[1]
                                         value = tuple[2]
-                                        value = f"'{value}'" if value not in [
-                                            True, False] else value
+                                        value = f"'{value}'" if type(value) == str else value
                                         converted.append(
                                             f"{field} {operator[oper]} {value}")
                                     elem.attrib[key] = " and ".join(converted)
@@ -95,8 +108,7 @@ def read_xml_files(directory):
                                             field = item[0]
                                             oper = item[1]
                                             value = item[2]
-                                            value = f"'{value}'" if value not in [
-                                                True, False] else value
+                                            value = f"'{value}'" if type(value) == str else value
                                             if or_cond > 0:
                                                 elem.attrib[key] += f"{field} {operator[oper]} {value} or "
                                                 or_cond -= 1
@@ -125,19 +137,18 @@ def read_xml_files(directory):
                     tree.write(file_path)
                     with open(file_path, 'r+') as file:
                         content = file.read()
-                
                         print(file_path)
-                        for substring in iterate_xml_comments_substrings(content):
-                            print(substring)
-                            converted_string = None
-                            if '<comment' in substring:
-                                converted_string = substring.replace('<comment com="','<!--').replace('" />','-->')
-                                print(converted_string)
-                                content = content.replace(substring,converted_string)
+                        counter = 0
+                        for comment in comments:
+                            print('----------------------------------',comment)
+                            counter += 1
+                            content = content.replace(f'<comment{counter} />',comment) 
                         file.seek(0)
-                        file.write('<?xml version="1.0" encoding="utf-8"?>' + '\n' + content)
+                        file.write(
+                            '<?xml version="1.0" encoding="utf-8"?>' + '\n' + content)
                         file.truncate()
-                except :
-                    print()
+                except Exception as e:
+                    print(e)
+
 
 read_xml_files(directory_path)
