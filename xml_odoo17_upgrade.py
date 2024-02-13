@@ -1,10 +1,17 @@
 import os
+import re
 import xml.etree.ElementTree as ET
 
 
 # Provide the directory path where your XML files are located
-directory_path = "/opt/odoo17/projects"
+directory_path = "addons_root_path"
 
+def iterate_xml_comments_substrings(input_string):
+    # Define the regular expression pattern to match substrings
+    pattern = r'<comment.*?/>'
+    # Find all substrings matching the pattern
+    for match in re.finditer(pattern, input_string):
+        yield match.group()
 
 def read_xml_files(directory):
     for directory_path, directory_names, filenames in os.walk(directory):
@@ -12,6 +19,12 @@ def read_xml_files(directory):
             if filename.endswith('.xml'):
                 file_path = os.path.join(directory_path, filename)
                 try:
+                    with open(file_path, 'r+') as file:
+                        content = file.read()
+                        content = content.replace('<!--', "<comment com='").replace('-->',"' />")
+                        file.seek(0)
+                        file.write(content)
+                        file.truncate()
                     tree = ET.parse(file_path)
                     root_element = tree.getroot()
                     # Convert old operators
@@ -33,7 +46,7 @@ def read_xml_files(directory):
                     # Loop on every element on xml file
                     for elem in root_element.iter():
                         # If element has attrs attribute
-                        # print(elem.attrib)
+                        print(elem.attrib)
                         if 'attrs' in elem.attrib.keys():
                             # Convert attrs to Dictionary
                             attrs = eval(elem.attrib.get("attrs"))
@@ -110,7 +123,21 @@ def read_xml_files(directory):
                             elem.attrib.pop('states')
                     # Save changes to file
                     tree.write(file_path)
-                except:
-                    print(file_path)
+                    with open(file_path, 'r+') as file:
+                        content = file.read()
+                
+                        print(file_path)
+                        for substring in iterate_xml_comments_substrings(content):
+                            print(substring)
+                            converted_string = None
+                            if '<comment' in substring:
+                                converted_string = substring.replace('<comment com="','<!--').replace('" />','-->')
+                                print(converted_string)
+                                content = content.replace(substring,converted_string)
+                        file.seek(0)
+                        file.write('<?xml version="1.0" encoding="utf-8"?>' + '\n' + content)
+                        file.truncate()
+                except :
+                    print()
 
 read_xml_files(directory_path)
