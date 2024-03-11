@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 
 # Provide the directory path where your XML files are located
-directory_path = "/home/dev/Desktop/try"
+directory_path = "/ModulePath"
 
 
 def iterate_xml_comments_substrings(input_string):
@@ -53,9 +53,9 @@ def convert_to_17_format(domain, operator):
         counter = 0
         returned_value = ""
         domain_len = len(domain)
+        or_cond = 0
         for item in domain:
             counter += 1
-            or_cond = 0
             if item == '|':
                 or_cond += 1
             else:
