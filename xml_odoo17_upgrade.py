@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 
 # Provide the directory path where your XML files are located
-directory_path = "/ModulePath"
+directory_path = "/home/dev/Desktop/xml_odoo17_upgrade/account_"
 
 
 def iterate_xml_comments_substrings(input_string):
@@ -121,8 +121,9 @@ def read_xml_files(directory):
                         if elem.attrib.get('position') == 'attributes':
                             parent = elem
                         if elem.tag == 'attribute' and elem.attrib.get('name') == 'attrs':
-                            dic = dict(eval(elem.text))
-                            print(dic)
+                            print(elem.text)
+                            dic = dict(eval(elem.text.replace(' ','')))
+                            print('xpath',dic)
                             for key in dic.keys():
                                 new = ET.SubElement(parent,'attribute',{'name':str(key)})
                                 new.text=convert_to_17_format(dic.get(key),operator)
@@ -135,9 +136,9 @@ def read_xml_files(directory):
                             # Convert attrs to Dictionary
                             attrs = eval(elem.attrib.get("attrs"))
                             for key in attrs.keys():
-                                print(key ,attrs.get(key))
+                                print("attrs",key ,attrs.get(key))
                                 elem.attrib[key] = convert_to_17_format(attrs.get(key), operator)
-
+                                print("Converted")
                             # print(elem.attrib)
                             # Remove attrs
                             elem.attrib.pop('attrs')
